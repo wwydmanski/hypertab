@@ -48,7 +48,6 @@ class Hypernetwork(torch.nn.Module):
         self.input_size = next(gen).size()[1]
         
         out_dim = self.model(torch.rand(1, self.input_size)).shape
-        print(out_dim)
         
         output_layer = torch.nn.Linear(out_dim[1], self.out_size)
         self.model.add_module("output_layer", output_layer)
@@ -204,7 +203,6 @@ class HypernetworkEmbeddings(Hypernetwork):
         embedding_size = next(gen).size()[1]
         
         out_dim = self.model(torch.rand(1, embedding_size)).shape
-        print(out_dim)
         output_layer = torch.nn.Linear(out_dim[1], self.out_size)
         
         self.test_mask = self._create_mask(self.test_nodes)
@@ -244,7 +242,6 @@ class HypernetworkPCA(Hypernetwork):
         
         self.model.add_module("output_layer", output_layer)
         self.template = np.zeros(self.input_size)
-        print(len(self.template))
         self.test_mask = self._create_mask(self.test_nodes)
             
         self.pca = self._get_pca(self.test_mask.cpu().detach())
