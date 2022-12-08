@@ -76,6 +76,9 @@ class HypernetworkSklearnInterface:
         self.epochs = epochs
         self.verbose = verbose
 
+        self.batch_callback = None
+        self.epoch_callback = None
+
     def fit(self, X, y):
         try:
             X = torch.from_numpy(X).to(torch.float32)
@@ -88,8 +91,10 @@ class HypernetworkSklearnInterface:
             self.optimizer,
             self.criterion,
             train_data,
-            self.epochs,
-            self.network.device,
+            epochs=self.epochs,
+            device=self.network.device,
+            batch_callback=self.batch_callback,
+            epoch_callback=self.epoch_callback,
             verbose=self.verbose,
         )
 
