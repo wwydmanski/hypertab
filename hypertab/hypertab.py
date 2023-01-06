@@ -1,7 +1,7 @@
 from .hypernetwork import Hypernetwork
 from .interfaces import HypernetworkSklearnInterface
 import numpy as np
-
+import torch
 
 class HyperTabClassifier:
     def __init__(
@@ -60,6 +60,7 @@ class HyperTabClassifier:
             input_dims=input_dims,
             target_architecture=target_architecture,
             test_nodes=self.test_nodes,
+            device=self.device,
         )
         self.hypernet.to(self.device)
         interface = HypernetworkSklearnInterface(
@@ -70,6 +71,11 @@ class HyperTabClassifier:
             device=self.device,
             verbose=self.verbose,
         )
+
+        # cast X, y to torch
+        X = torch.from_numpy(X).to(torch.float32)
+        y = torch.from_numpy(y).to(torch.long)
+
         interface.fit(X, y)
         self.interface = interface
     
@@ -77,10 +83,14 @@ class HyperTabClassifier:
         """ Return the predicted value of each sample in X """
         if self.interface is None:
             raise ValueError("Model not trained yet")
+        
+        X = torch.from_numpy(X).to(torch.float32)
         return self.interface.predict(X)
 
     def predict_proba(self, X):
         """ Return the predicted class probability of each sample in X """
         if self.interface is None:
             raise ValueError("Model not trained yet")
+
+        X = torch.from_numpy(X).to(torch.float32)
         return self.interface.predict_proba(X)
