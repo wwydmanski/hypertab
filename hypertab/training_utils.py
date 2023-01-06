@@ -167,7 +167,6 @@ def train_model(hypernet,
                     })
             total_loss /= (num+1)
             if epoch_callback is not None:
-                print(y_pred)
                 epoch_callback({
                     "total_loss": total_loss,
                     "bacc": balanced_accuracy_score(y_true, np.argmax(y_pred, axis=-1))

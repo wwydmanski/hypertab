@@ -15,15 +15,11 @@ class TrainingModes(enum.Enum):
 class Hypernetwork(torch.nn.Module):
     def __init__(
         self,
-        architecture=torch.nn.Sequential(torch.nn.Linear(784, 128), 
-                        torch.nn.ReLU(),
-                        torch.nn.Linear(128, 64),
-                        torch.nn.ReLU(),
-                        torch.nn.Linear(64, 64)
-                       ),
+        input_dims=None,
+        architecture=None,
         target_architecture=[(20, 10), (10, 10)],
         test_nodes=100,
-        mode=TrainingModes.SLOW_STEP,
+        mode=TrainingModes.CARTHESIAN,
         device="cuda:0",
     ):
         """ Initialize a hypernetwork.
@@ -35,6 +31,15 @@ class Hypernetwork(torch.nn.Module):
             device - device to use
         """
         super().__init__()
+        if architecture is None and input_dims is not None:
+            architecture = torch.nn.Sequential(torch.nn.Linear(input_dims, 128), 
+                        torch.nn.ReLU(),
+                        torch.nn.Linear(128, 64),
+                        torch.nn.ReLU(),
+                        torch.nn.Linear(64, 64)
+                       )
+        elif architecture is None and input_dims is None:
+            raise ValueError("Either `input_dims` or `architecture` is required.")
         self.target_outsize = target_architecture[-1][-1]
         self.mask_size = target_architecture[0][0]
         self.target_architecture = target_architecture
@@ -63,6 +68,27 @@ class Hypernetwork(torch.nn.Module):
         self._retrained = True
         self._test_nets = None
         
+    def forward(self, data, mask=None):
+        """Get a hypernet prediction.
+        During training we use a single target network per sample.
+        During eval, we create a network for each test mask and average their results
+
+        Args:
+            data - prediction input
+            mask - either None or a torch.tensor((data.shape[0], data.shape[1])).
+        """
+        if self.training:
+            self._retrained = True
+            if self.mode == TrainingModes.SLOW_STEP or self.mode == TrainingModes.CARTHESIAN:
+                return self._slow_step_training(data, mask)
+
+            if mask is None:
+                mask = self._create_mask(len(data))
+
+            return self._external_mask_training(data, mask)
+        else:
+            return self._ensemble_inference(data, mask)
+            
     def calculate_outdim(self, architecture):
         weights = 0
         for layer in architecture:
@@ -108,26 +134,6 @@ class Hypernetwork(torch.nn.Module):
             res[i] = nn(masked_data)
         return res
 
-    def forward(self, data, mask=None):
-        """Get a hypernet prediction.
-        During training we use a single target network per sample.
-        During eval, we create a network for each test mask and average their results
-
-        Args:
-            data - prediction input
-            mask - either None or a torch.tensor((data.shape[0], data.shape[1])).
-        """
-        if self.training:
-            self._retrained = True
-            if self.mode == TrainingModes.SLOW_STEP or self.mode == TrainingModes.CARTHESIAN:
-                return self._slow_step_training(data, mask)
-
-            if mask is None:
-                mask = self._create_mask(len(data))
-
-            return self._external_mask_training(data, mask)
-        else:
-            return self._ensemble_inference(data, mask)
 
     def _ensemble_inference(self, data, mask):
         if mask is None:
@@ -266,4 +272,3 @@ class HypernetworkWithFeatureSelector(Hypernetwork):
         
         self.test_mask = feature_selector(self, self.test_nodes)
         self._create_mask = lambda x: feature_selector(self, x)    
-    

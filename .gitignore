@@ -1,3 +1,6 @@
 .ipynb_checkpoints
 tabular_hypernet.egg-info/
 build/
+.vscode/
+dist/
+hypertab.egg-info/
