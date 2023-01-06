@@ -1,0 +1,4 @@
+[project]
+name = "hypertab"
+authors = [{name = "Witold Wydmański", email = "wwydmanski@gmail.com"}]
+dynamic = ["version", "description"]
