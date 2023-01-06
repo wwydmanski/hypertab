@@ -6,7 +6,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 sys.path.append('../')
-from tabular_hypernet.hypernetwork import Hypernetwork
+from hypertab.hypernetwork import Hypernetwork
 
 def test_inference():
     np.random.seed(42)
