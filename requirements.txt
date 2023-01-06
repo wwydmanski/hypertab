@@ -1,0 +1,8 @@
+comet_ml==3.31.7
+numpy==1.23.5
+python-dotenv==0.21.0
+scikit_learn==1.2.0
+setuptools==61.2.0
+torch==1.12.1
+torchvision==0.13.1
+tqdm==4.64.0
