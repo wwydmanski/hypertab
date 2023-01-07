@@ -1,7 +1,7 @@
 numpy>=1.22.0
-python-dotenv==0.21.0
+python-dotenv>=0.21.0
 scikit_learn>=0.24.2
-setuptools==61.2.0
+setuptools>=59.8.0
 torch
 torchvision
-tqdm==4.64.0
+tqdm>=4.64.0
