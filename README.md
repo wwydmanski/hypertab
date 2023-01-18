@@ -1,10 +1,11 @@
+# HyperTab
 <a target="_blank" href="https://colab.research.google.com/github/wwydmanski/hypertab/blob/master/notebooks/HyperTab_ablation_study.ipynb">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
 </a>
 
-# HyperTab
+HyperTab is a hypernetwork-based classifier for small tabular datasets.
 
-HyperTab is a hypernetwork-based classifier for small tabular datasets. It's especially efficient when the number of samples is smaller than 500. The larger the dataset, the smaller is the advantage of using HyperTab over other methods.
+It's especially efficient when the number of samples is smaller than 500. The smaller the dataset, the larger is the advantage of HyperTab over other algorithms.
 
 ## Installation
 
