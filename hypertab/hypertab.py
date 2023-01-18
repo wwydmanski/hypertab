@@ -48,6 +48,12 @@ class HyperTabClassifier:
             y (np.ndarray): target data
         """
 
+        try:
+            X = X.numpy()
+            y = y.numpy()
+        except AttributeError:
+            pass
+
         n_unique = len(np.unique(y))
         input_dims = X.shape[1]
         target_dim = int(input_dims * self.subsample)
@@ -81,6 +87,11 @@ class HyperTabClassifier:
     
     def predict(self, X):
         """ Return the predicted value of each sample in X """
+        try:
+            X = X.numpy()
+        except AttributeError:
+            pass
+
         if self.interface is None:
             raise ValueError("Model not trained yet")
         
@@ -89,6 +100,11 @@ class HyperTabClassifier:
 
     def predict_proba(self, X):
         """ Return the predicted class probability of each sample in X """
+        try:
+            X = X.numpy()
+        except AttributeError:
+            pass
+
         if self.interface is None:
             raise ValueError("Model not trained yet")
 
