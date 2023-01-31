@@ -10,6 +10,8 @@ import torch.utils.data as data_utils
 from sklearn.metrics import roc_auc_score, f1_score, precision_score, recall_score, balanced_accuracy_score
 from .hypernetwork import TrainingModes
 
+from joblib.externals.loky.backend.context import get_context
+
 torch.set_default_dtype(torch.float32)
 
 from tqdm import trange
@@ -33,9 +35,9 @@ def get_dataset(size=60000, masked=False, mask_no=200, mask_size=700, shared_mas
     trainset = data_utils.Subset(trainset, indices)
     
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size,
-                                          shuffle=True, num_workers=1)
+                                          shuffle=True, num_workers=0, multiprocessing_context=get_context('loky'))
     testloader = torch.utils.data.DataLoader(testset, batch_size=test_batch_size,
-                                         shuffle=False, num_workers=1)
+                                         shuffle=False, num_workers=0, multiprocessing_context=get_context('loky'))
     return trainloader, testloader
 
 

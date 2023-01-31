@@ -1,9 +1,10 @@
 from .hypernetwork import Hypernetwork
+from sklearn.base import BaseEstimator, ClassifierMixin
 from .interfaces import HypernetworkSklearnInterface
 import numpy as np
 import torch
 
-class HyperTabClassifier:
+class HyperTabClassifier(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
         subsample: float = 0.5,
@@ -110,3 +111,4 @@ class HyperTabClassifier:
 
         X = torch.from_numpy(X).to(torch.float32)
         return self.interface.predict_proba(X)
+

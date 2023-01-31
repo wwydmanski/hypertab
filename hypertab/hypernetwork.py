@@ -170,20 +170,23 @@ class Hypernetwork(torch.nn.Module):
         return nets
 
     @staticmethod
-    def random_choice_noreplace2(l, n_sample, num_draw):
-        '''
+    def random_choice(l, n_sample, num_draw):
+        """
         l: 1-D array or list
         n_sample: sample size for each draw
         num_draw: number of draws
 
-        Intuition: Randomly generate numbers, get the index of the smallest n_sample number for each row.
-        '''
+        Intuition:
+        1. np.random.rand(num_draw, len(l)) generates a matrix of shape (num_draw, len(l))
+        2. np.argpartition(matrix, n_sample-1, axis=-1) returns the indices of the n_sample smallest elements in each row
+        3. [:,:n_sample] returns the first n_sample elements in each row
+        """
         l = np.array(l)
         return l[np.argpartition(np.random.rand(num_draw,len(l)), n_sample-1,axis=-1)[:,:n_sample]]
     
     def _create_mask(self, count):
         # masks = np.random.choice((len(self.template)), (count, self.mask_size), False)
-        masks = Hypernetwork.random_choice_noreplace2(np.arange(len(self.template)), self.mask_size, count)
+        masks = Hypernetwork.random_choice(np.arange(len(self.template)), self.mask_size, count)
         tmp = np.array([self.template.copy() for _ in range(count)])
         for i, mask in enumerate(masks):
             tmp[i, mask] = 1
