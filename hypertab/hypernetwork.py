@@ -44,6 +44,7 @@ class Hypernetwork(torch.nn.Module):
         self.mask_size = target_architecture[0][0]
         self.target_architecture = target_architecture
         self.device = device
+        self.dtype = torch.float32
         self.mode = mode
 
         self.out_size = self.calculate_outdim(target_architecture)
@@ -95,11 +96,15 @@ class Hypernetwork(torch.nn.Module):
             weights += layer[0]*layer[1]+layer[1]
         return weights
 
-    def to(self, device):
-        super().to(device)
-        self.device = device
+    def to(self, arg):
+        # check if we're changing dtype or device
+        if isinstance(arg, torch.dtype):
+            self.dtype = arg
+        else:
+            self.device = arg
+        super().to(arg)
         self.test_mask = self._create_mask(self.test_nodes)
-        self.model = self.model.to(device)
+        self.model = self.model.to(arg)
         return self
 
     def _slow_step_training(self, data, mask):
@@ -160,7 +165,7 @@ class Hypernetwork(torch.nn.Module):
 
     def __craft_nets(self, mask):
         nets = []
-        weights = self.craft_network(mask.to(torch.float32))
+        weights = self.craft_network(mask.to(self.dtype))
         for i in range(len(mask)):
             nn = InsertableNet(
                 weights[i],
@@ -190,7 +195,7 @@ class Hypernetwork(torch.nn.Module):
         tmp = np.array([self.template.copy() for _ in range(count)])
         for i, mask in enumerate(masks):
             tmp[i, mask] = 1
-        mask = torch.from_numpy(tmp).to(torch.float32).to(self.device)
+        mask = torch.from_numpy(tmp).to(self.dtype).to(self.device)
         return mask
 
     def craft_network(self, mask):
@@ -258,7 +263,7 @@ class HypernetworkPCA(Hypernetwork):
     def craft_network(self, mask):
         device = mask.device
         embs = self.pca.transform(mask.to("cpu"))
-        embs = torch.tensor(embs).to(device).to(torch.float32)
+        embs = torch.tensor(embs).to(device).to(self.dtype)
         
         out = self.model(embs)
         return out
