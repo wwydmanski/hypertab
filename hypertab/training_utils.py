@@ -145,23 +145,19 @@ def train_model(hypernet,
                     y_pred.extend(outputs.tolist())
 
                 elif hypernet.mode == TrainingModes.CARTHESIAN:
-                    mask_order = np.arange(len(hypernet.test_mask))
-                    np.random.shuffle(mask_order)
+                    masks = hypernet.test_mask
+                    optimizer.zero_grad()
+
+                    outputs = hypernet._slow_step_training(inputs, masks)
+                    loss = 0
                     preds = []
-                    for mask_bound in range(0, len(hypernet.test_mask), 16):
-                        masks_idx = mask_order[mask_bound:mask_bound+16]
-                        masks = hypernet.test_mask[masks_idx]
-                        optimizer.zero_grad()
+                    for out in outputs:
+                        loss += criterion(out, labels)
+                        preds.append(out.tolist())
 
-                        outputs = hypernet._slow_step_training(inputs, masks)
-                        loss = 0
-                        for out in outputs:
-                            loss += criterion(out, labels)
-                            preds.append(out.tolist())
-
-                        loss.backward()
-                        total_loss += loss.item()
-                        optimizer.step()
+                    loss.backward()
+                    total_loss += loss.item()
+                    optimizer.step()
                     preds = np.mean(preds, axis=0).tolist()
                     y_pred.extend(preds)
 
