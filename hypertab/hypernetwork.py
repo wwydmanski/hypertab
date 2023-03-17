@@ -1,7 +1,7 @@
 
 import torch
 import numpy as np
-from .modules import InsertableNet
+from .modules import InsertableNet, MultiInsertableNet
 import enum
 import torch.nn.functional as F
 from sklearn.decomposition import PCA
@@ -80,13 +80,7 @@ class Hypernetwork(torch.nn.Module):
         """
         if self.training:
             self._retrained = True
-            if self.mode == TrainingModes.SLOW_STEP or self.mode == TrainingModes.CARTHESIAN:
-                return self._slow_step_training(data, mask)
-
-            if mask is None:
-                mask = self._create_mask(len(data))
-
-            return self._external_mask_training(data, mask)
+            return self._slow_step_training(data, mask)
         else:
             return self._ensemble_inference(data, mask)
             
@@ -108,14 +102,24 @@ class Hypernetwork(torch.nn.Module):
         return self
 
     def _slow_step_training(self, data, mask):
-        weights = self.craft_network(mask[:1])
-        mask = mask[0].to(torch.bool)
-        nn = InsertableNet(
-            weights[0],
-            self.target_architecture,
-        )
+        weights = self.craft_network(mask)
+        mask = mask.to(torch.bool)
 
-        masked_data = data[:, mask]
+        masked_data = []
+        for i in range(len(mask)):
+            tmp = []
+            for j in range(len(data)):
+                tmp.append(data[j, mask[i]])
+            masked_data.append(torch.stack(tmp))
+        masked_data = torch.stack(masked_data)
+
+        res = torch.zeros((len(mask), len(data), self.target_outsize)).to(self.device)
+        print(self.target_architecture)
+        nn = MultiInsertableNet(
+            weights,
+            self.target_architecture,
+            len(mask)
+        )
         res = nn(masked_data)
         return res
 

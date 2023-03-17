@@ -73,6 +73,41 @@ class InsertableNet(torch.nn.Module):
 
         return F.linear(out, self.layers[-1][0], self.layers[-1][1])
     
+class MultiInsertableNet(torch.nn.Module):
+    def __init__(self, weights, shape=[(784, 10), (10, 10)], num_nets=1):
+        super().__init__()
+        self.layers = []
+        self._offset = 0
+        
+        for layer in shape:
+            _w_size = layer[0]*layer[1]
+            _b_size = layer[1]
+            
+            _l = (weights[:, self._offset:self._offset+_w_size].reshape((num_nets, layer[1], layer[0])),
+                  weights[:, self._offset+_w_size:self._offset+_w_size+_b_size])
+            self._offset += _w_size+_b_size
+
+            self.layers.append(_l)
+    
+    def forward(self, data):
+        out = data
+        for layer in self.layers[:-1]:
+            print(out.shape)
+            print(layer[0].shape)
+            print(layer[1].shape)
+            out = torch.einsum('mti,mbi->mbt', layer[0], out)
+            for i in range(layer[1].shape[0]):
+                out[i] = out[i] + layer[1][i]
+            # out = F.relu(out)
+            # out = F.linear(out, layer[0], layer[1])
+            out = F.relu(out)
+            
+        print(out.shape)
+        out = torch.einsum('mti,mbi->mbt', self.layers[-1][0], out)
+        for i in range(self.layers[-1][1].shape[0]):
+            out[i] = out[i] + self.layers[-1][1][i]
+        return out
+        # return F.linear(out, self.layers[-1][0], self.layers[-1][1])
     
 class MaskedNetwork(SimpleNetwork):
     def __init__(self, input_size, mask_size, layers=[10]):
