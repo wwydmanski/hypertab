@@ -5,8 +5,20 @@ from .modules import InsertableNet, MultiInsertableNet
 import enum
 import torch.nn.functional as F
 from sklearn.decomposition import PCA
+from line_profiler import LineProfiler
 
 torch.set_default_dtype(torch.float32)
+
+from decorator import decorator
+
+@decorator
+def profile_each_line(func, *args, **kwargs):
+    profiler = LineProfiler()
+    profiler.add_function(func)
+    try:
+        func(*args, **kwargs)
+    finally:
+        profiler.print_stats()
 
 class TrainingModes(enum.Enum):
     SLOW_STEP = "slow-step"
@@ -101,6 +113,7 @@ class Hypernetwork(torch.nn.Module):
         self.model = self.model.to(arg)
         return self
 
+    @profile_each_line
     def _slow_step_training(self, data, mask):
         weights = self.craft_network(mask)
         mask = mask.to(torch.bool)
@@ -114,7 +127,6 @@ class Hypernetwork(torch.nn.Module):
         masked_data = torch.stack(masked_data)
 
         res = torch.zeros((len(mask), len(data), self.target_outsize)).to(self.device)
-        print(self.target_architecture)
         nn = MultiInsertableNet(
             weights,
             self.target_architecture,
@@ -122,27 +134,6 @@ class Hypernetwork(torch.nn.Module):
         )
         res = nn(masked_data)
         return res
-
-    def _external_mask_training(self, data, mask):
-        recalculate = [True] * len(mask)
-        for i in range(1, len(mask)):
-            if torch.equal(mask[i - 1], mask[i]):
-                recalculate[i] = False
-
-        weights = self.craft_network(mask)
-        mask = mask.to(torch.bool)
-
-        res = torch.zeros((len(data), self.target_outsize)).to(self.device)
-        for i in range(len(data)):
-            if recalculate[i]:
-                nn = InsertableNet(
-                    weights[i],
-                    self.target_architecture,
-                )
-            masked_data = data[i, mask[i]]
-            res[i] = nn(masked_data)
-        return res
-
 
     def _ensemble_inference(self, data, mask):
         if mask is None:
