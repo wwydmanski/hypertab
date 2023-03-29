@@ -90,7 +90,6 @@ def test_model(hypernet, testloader, device='cpu', verbose=False):
         print(f"Test loss: {loss/(i+1):.2g}")
     return correct/len(testloader.dataset)*100
 
-
 def batch_predict(network, loader, device='cpu'):
     res = []
     for i, data in enumerate(loader):

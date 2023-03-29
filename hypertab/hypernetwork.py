@@ -16,9 +16,11 @@ def profile_each_line(func, *args, **kwargs):
     profiler = LineProfiler()
     profiler.add_function(func)
     try:
-        func(*args, **kwargs)
+        res = func(*args, **kwargs)
     finally:
         profiler.print_stats()
+
+    return res
 
 class TrainingModes(enum.Enum):
     SLOW_STEP = "slow-step"
@@ -113,18 +115,12 @@ class Hypernetwork(torch.nn.Module):
         self.model = self.model.to(arg)
         return self
 
-    @profile_each_line
+    # @profile_each_line
     def _slow_step_training(self, data, mask):
         weights = self.craft_network(mask)
         mask = mask.to(torch.bool)
 
-        masked_data = []
-        for i in range(len(mask)):
-            tmp = []
-            for j in range(len(data)):
-                tmp.append(data[j, mask[i]])
-            masked_data.append(torch.stack(tmp))
-        masked_data = torch.stack(masked_data)
+        masked_data = torch.stack([data[:, mask[i]] for i in range(len(mask))])
 
         res = torch.zeros((len(mask), len(data), self.target_outsize)).to(self.device)
         nn = MultiInsertableNet(
