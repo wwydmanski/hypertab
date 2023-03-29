@@ -1,7 +1,3 @@
-from dotenv import load_dotenv
-
-import os
-
 import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets

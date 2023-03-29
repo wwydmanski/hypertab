@@ -1,8 +1,3 @@
-from dotenv import load_dotenv
-load_dotenv()
-
-import os
-
 import torch
 import numpy as np
 import torch.nn.functional as F

@@ -4,3 +4,4 @@ build/
 .vscode/
 dist/
 hypertab.egg-info/
+**/__pycache__
