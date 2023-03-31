@@ -93,13 +93,12 @@ class MultiInsertableNet(torch.nn.Module):
         out = data
         for layer in self.layers[:-1]:
             out = torch.einsum('mti,mbi->mbt', layer[0], out)
-            for i in range(layer[1].shape[0]):
-                out[i] = out[i] + layer[1][i]
+            out = out + layer[1].unsqueeze(1)
+
             out = F.relu(out)
             
         out = torch.einsum('mti,mbi->mbt', self.layers[-1][0], out)
-        for i in range(self.layers[-1][1].shape[0]):
-            out[i] = out[i] + self.layers[-1][1][i]
+        out = out + self.layers[-1][1].unsqueeze(1)
         return out
     
 class MaskedNetwork(SimpleNetwork):

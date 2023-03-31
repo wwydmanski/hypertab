@@ -10,6 +10,7 @@ from line_profiler import LineProfiler
 torch.set_default_dtype(torch.float32)
 
 from decorator import decorator
+import time
 
 @decorator
 def profile_each_line(func, *args, **kwargs):
@@ -123,6 +124,7 @@ class Hypernetwork(torch.nn.Module):
         masked_data = torch.stack([data[:, mask[i]] for i in range(len(mask))])
 
         res = torch.zeros((len(mask), len(data), self.target_outsize)).to(self.device)
+
         nn = MultiInsertableNet(
             weights,
             self.target_architecture,

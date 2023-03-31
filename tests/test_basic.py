@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from hypertab import HyperTabClassifier
 import numpy as np
 import torch
@@ -13,7 +16,7 @@ def test_basic_prediction():
     y = X[:, 0] > 500
 
     # Create a classifier
-    clf = HyperTabClassifier(epochs=10)
+    clf = HyperTabClassifier(epochs=10, device="cuda:2")
 
     # Train the classifier
     clf.fit(X, y)

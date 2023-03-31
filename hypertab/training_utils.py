@@ -16,7 +16,6 @@ torch.set_default_dtype(torch.float32)
 
 from tqdm import trange
 
-
 def get_dataset(size=60000, masked=False, mask_no=200, mask_size=700, shared_mask=False, batch_size=32, test_batch_size=32):
     mods = [transforms.ToTensor(), 
         transforms.Normalize((0.1307,), (0.3081,)),    #mean and std of MNIST
@@ -150,9 +149,10 @@ def train_model(hypernet,
                     outputs = hypernet._slow_step_training(inputs, masks)
                     loss = 0
                     preds = []
-                    for out in outputs:
-                        loss += criterion(out, labels)
-                        preds.append(out.tolist())
+                    outputs = torch.permute(outputs, (1, 2, 0))
+                    labels = labels[:, None].tile((1, len(masks)))
+                    loss = criterion(outputs, labels)
+                    preds = outputs.tolist()
 
                     loss.backward()
                     total_loss += loss.item()

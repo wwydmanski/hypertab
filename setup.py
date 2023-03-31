@@ -11,7 +11,7 @@ setup(
     name="hypertab",
     author="Witold Wydmański",
     author_email="wwydmanski@gmail.com",
-    version="0.3.2",
+    version="0.5.2",
     description="HyperTab: hypernetwork for small tabular datasets",
     long_description=long_description,
     long_description_content_type='text/markdown',
