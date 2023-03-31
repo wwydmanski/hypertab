@@ -7,7 +7,7 @@ import torch
 class HyperTabClassifier(BaseEstimator, ClassifierMixin):
     def __init__(
         self,
-        subsample: float = 0.5,
+        subsample: float = 0.8,
         device: str = "cpu",
         hidden_dims: int = 10,
         test_nodes: int = 100,

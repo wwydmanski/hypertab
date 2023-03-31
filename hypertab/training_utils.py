@@ -12,7 +12,6 @@ torch.set_default_dtype(torch.float32)
 
 from tqdm import trange
 
-
 def get_dataset(size=60000, masked=False, mask_no=200, mask_size=700, shared_mask=False, batch_size=32, test_batch_size=32):
     mods = [transforms.ToTensor(), 
         transforms.Normalize((0.1307,), (0.3081,)),    #mean and std of MNIST
@@ -86,7 +85,6 @@ def test_model(hypernet, testloader, device='cpu', verbose=False):
         print(f"Test loss: {loss/(i+1):.2g}")
     return correct/len(testloader.dataset)*100
 
-
 def batch_predict(network, loader, device='cpu'):
     res = []
     for i, data in enumerate(loader):
@@ -141,21 +139,20 @@ def train_model(hypernet,
                     y_pred.extend(outputs.tolist())
 
                 elif hypernet.mode == TrainingModes.CARTHESIAN:
-                    mask_order = np.arange(len(hypernet.test_mask))
-                    np.random.shuffle(mask_order)
+                    masks = hypernet.test_mask
+                    optimizer.zero_grad()
+
+                    outputs = hypernet._slow_step_training(inputs, masks)
+                    loss = 0
                     preds = []
-                    for mask_idx in mask_order:
-                        masks = hypernet.test_mask[mask_idx].repeat(len(inputs), 1)
+                    outputs = torch.permute(outputs, (1, 2, 0))
+                    labels = labels[:, None].tile((1, len(masks)))
+                    loss = criterion(outputs, labels)
+                    preds = outputs.tolist()
 
-                        optimizer.zero_grad()
-
-                        outputs = hypernet(inputs, masks)
-                        loss = criterion(outputs, labels)
-                        loss.backward()
-                        total_loss += loss.item()
-                        
-                        optimizer.step()
-                        preds.append(outputs.tolist())
+                    loss.backward()
+                    total_loss += loss.item()
+                    optimizer.step()
                     preds = np.mean(preds, axis=0).tolist()
                     y_pred.extend(preds)
 

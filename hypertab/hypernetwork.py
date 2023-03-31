@@ -1,12 +1,27 @@
 
 import torch
 import numpy as np
-from .modules import InsertableNet
+from .modules import InsertableNet, MultiInsertableNet
 import enum
 import torch.nn.functional as F
 from sklearn.decomposition import PCA
+from line_profiler import LineProfiler
 
 torch.set_default_dtype(torch.float32)
+
+from decorator import decorator
+import time
+
+@decorator
+def profile_each_line(func, *args, **kwargs):
+    profiler = LineProfiler()
+    profiler.add_function(func)
+    try:
+        res = func(*args, **kwargs)
+    finally:
+        profiler.print_stats()
+
+    return res
 
 class TrainingModes(enum.Enum):
     SLOW_STEP = "slow-step"
@@ -80,13 +95,7 @@ class Hypernetwork(torch.nn.Module):
         """
         if self.training:
             self._retrained = True
-            if self.mode == TrainingModes.SLOW_STEP or self.mode == TrainingModes.CARTHESIAN:
-                return self._slow_step_training(data, mask)
-
-            if mask is None:
-                mask = self._create_mask(len(data))
-
-            return self._external_mask_training(data, mask)
+            return self._slow_step_training(data, mask)
         else:
             return self._ensemble_inference(data, mask)
             
@@ -107,38 +116,22 @@ class Hypernetwork(torch.nn.Module):
         self.model = self.model.to(arg)
         return self
 
+    # @profile_each_line
     def _slow_step_training(self, data, mask):
-        weights = self.craft_network(mask[:1])
-        mask = mask[0].to(torch.bool)
-        nn = InsertableNet(
-            weights[0],
-            self.target_architecture,
-        )
-
-        masked_data = data[:, mask]
-        res = nn(masked_data)
-        return res
-
-    def _external_mask_training(self, data, mask):
-        recalculate = [True] * len(mask)
-        for i in range(1, len(mask)):
-            if torch.equal(mask[i - 1], mask[i]):
-                recalculate[i] = False
-
         weights = self.craft_network(mask)
         mask = mask.to(torch.bool)
 
-        res = torch.zeros((len(data), self.target_outsize)).to(self.device)
-        for i in range(len(data)):
-            if recalculate[i]:
-                nn = InsertableNet(
-                    weights[i],
-                    self.target_architecture,
-                )
-            masked_data = data[i, mask[i]]
-            res[i] = nn(masked_data)
-        return res
+        masked_data = torch.stack([data[:, mask[i]] for i in range(len(mask))])
 
+        res = torch.zeros((len(mask), len(data), self.target_outsize)).to(self.device)
+
+        nn = MultiInsertableNet(
+            weights,
+            self.target_architecture,
+            len(mask)
+        )
+        res = nn(masked_data)
+        return res
 
     def _ensemble_inference(self, data, mask):
         if mask is None:

@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from hypertab import HyperTabClassifier
 import numpy as np
 import torch
