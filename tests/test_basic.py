@@ -16,7 +16,7 @@ def test_basic_prediction():
     y = X[:, 0] > 500
 
     # Create a classifier
-    clf = HyperTabClassifier(epochs=10)
+    clf = HyperTabClassifier(epochs=40, device="cuda:0")
 
     # Train the classifier
     clf.fit(X, y)

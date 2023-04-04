@@ -9,19 +9,7 @@ from line_profiler import LineProfiler
 
 torch.set_default_dtype(torch.float32)
 
-from decorator import decorator
 import time
-
-@decorator
-def profile_each_line(func, *args, **kwargs):
-    profiler = LineProfiler()
-    profiler.add_function(func)
-    try:
-        res = func(*args, **kwargs)
-    finally:
-        profiler.print_stats()
-
-    return res
 
 class TrainingModes(enum.Enum):
     SLOW_STEP = "slow-step"
@@ -116,7 +104,6 @@ class Hypernetwork(torch.nn.Module):
         self.model = self.model.to(arg)
         return self
 
-    # @profile_each_line
     def _slow_step_training(self, data, mask):
         weights = self.craft_network(mask)
         mask = mask.to(torch.bool)
@@ -136,17 +123,20 @@ class Hypernetwork(torch.nn.Module):
     def _ensemble_inference(self, data, mask):
         if mask is None:
             mask = self.test_mask
-            nets = self._get_test_nets()
+            weights = self.craft_network(self.test_mask)
         else:
-            nets = self.__craft_nets(mask)
+            weights = self.craft_network(mask)
         mask = mask.to(torch.bool)
+        masked_data = torch.stack([data[:, mask[i]] for i in range(len(mask))])
 
-        res = torch.zeros((len(data), self.target_outsize)).to(self.device)
-        for i in range(len(mask)):
-            nn = nets[i]
-            masked_data = data[:, mask[i]]
-            res += nn(masked_data)
-        res /= len(mask)
+        nn = MultiInsertableNet(
+            weights,
+            self.target_architecture,
+            len(mask)
+        )
+        res = nn(masked_data)
+        res = res.mean(dim=0)
+
         return res
 
     def _get_test_nets(self):

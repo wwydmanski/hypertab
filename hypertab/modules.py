@@ -87,12 +87,11 @@ class MultiInsertableNet(torch.nn.Module):
     def forward(self, data):
         out = data
         for layer in self.layers[:-1]:
-            out = torch.einsum('mti,mbi->mbt', layer[0], out)
+            out = torch.matmul(layer[0], out.transpose(1, 2)).transpose(1, 2)
             out = out + layer[1].unsqueeze(1)
-
             out = F.relu(out)
             
-        out = torch.einsum('mti,mbi->mbt', self.layers[-1][0], out)
+        out = torch.matmul(self.layers[-1][0], out.transpose(1, 2)).transpose(1, 2)
         out = out + self.layers[-1][1].unsqueeze(1)
         return out
     
