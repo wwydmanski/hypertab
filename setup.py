@@ -11,7 +11,11 @@ setup(
     name="hypertab",
     author="Witold Wydmański",
     author_email="wwydmanski@gmail.com",
-    version="0.6.0",
+<<<<<<< HEAD
+    version="0.2.2",
+=======
+    version="0.3.2",
+>>>>>>> parent of 4723af0 (feat: optimizations)
     description="HyperTab: hypernetwork for small tabular datasets",
     long_description=long_description,
     long_description_content_type='text/markdown',
