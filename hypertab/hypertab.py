@@ -60,6 +60,7 @@ class HyperTabClassifier(BaseEstimator, ClassifierMixin):
         target_dim = int(input_dims * self.subsample)
         target_architecture = [
             (target_dim, self.hidden_dims),
+            (self.hidden_dims, self.hidden_dims),
             (self.hidden_dims, n_unique),
         ]
 

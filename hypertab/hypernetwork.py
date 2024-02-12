@@ -17,7 +17,7 @@ class Hypernetwork(torch.nn.Module):
         self,
         input_dims=None,
         architecture=None,
-        target_architecture=[(20, 10), (10, 10)],
+        target_architecture=[(20, 16), (16, 10), (10, 10)],
         test_nodes=100,
         mode=TrainingModes.CARTHESIAN,
         device="cuda:0",
